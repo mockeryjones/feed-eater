@@ -1,0 +1,10 @@
+[
+  {
+    "name": "google",
+    "path" : "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss"
+  },
+  {
+    "name": "topix-world-news",
+    "path": "http://www.topix.com/rss/world/{QUERY}"
+  }
+]

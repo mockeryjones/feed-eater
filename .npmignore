@@ -1,0 +1,12 @@
+docs
+src
+node_modules
+reports
+test
+lib
+.git
+.DS_Store
+npm-debug.log
+README.md
+make-webpack-config.js
+webpack.config.js
