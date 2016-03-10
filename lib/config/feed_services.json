@@ -6,5 +6,9 @@
   {
     "name": "topix-world-news",
     "path": "http://www.topix.com/rss/world/{QUERY}"
+  },
+  {
+    "name": "bing",
+    "path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss"
   }
 ]

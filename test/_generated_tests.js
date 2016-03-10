@@ -57,13 +57,17 @@
 
 	var _main2 = _interopRequireDefault(_main);
 
-	var _test_data2 = __webpack_require__(11);
+	var _lodash = __webpack_require__(13);
+
+	var _lodash2 = _interopRequireDefault(_lodash);
+
+	var _test_data2 = __webpack_require__(14);
 
 	var _test_data3 = _interopRequireDefault(_test_data2);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var expect = __webpack_require__(12).expect;
+	var expect = __webpack_require__(15).expect;
 
 
 	describe('Feed Eater', function () {
@@ -117,6 +121,32 @@
 	      expect(_main2.default.cache.getCachedData('test-data')).to.equal(_test_data3.default);
 	    });
 	  });
+
+	  describe('Feed Eater - Query Service', function () {
+	    it('should provide query building service', function () {
+	      expect(_main2.default.query).to.exist;
+	    });
+	    it('should build all queries for test keyword', function () {
+	      var queries = _main2.default.query.getAllQueries(_test_data3.default.query.test_query);
+	      var q_keys = _lodash2.default.keys(queries);
+	      expect(q_keys.length).to.be.above(1);
+	    });
+	    it('should build only two for test keyword', function () {
+	      var queries = _main2.default.query.getQueryForServices(_test_data3.default.query.test_query, _test_data3.default.query.search_only_services);
+	      var q_keys = _lodash2.default.keys(queries);
+	      expect(q_keys.length).to.be.equal(2);
+	    });
+	    it('should build only one for test keyword', function () {
+	      var queries = _main2.default.query.getQueryForServices(_test_data3.default.query.test_query, _test_data3.default.query.one_service_array);
+	      var q_keys = _lodash2.default.keys(queries);
+	      expect(q_keys.length).to.be.equal(1);
+	    });
+	    it('should build only one (the other way) for test keyword', function () {
+	      var queries = _main2.default.query.getQueryForService(_test_data3.default.query.test_query, _test_data3.default.query.single_service);
+	      var q_keys = _lodash2.default.keys(queries);
+	      expect(q_keys.length).to.be.equal(1);
+	    });
+	  });
 	});
 
 /***/ },
@@ -141,6 +171,10 @@
 
 	var _cache2 = _interopRequireDefault(_cache);
 
+	var _query = __webpack_require__(11);
+
+	var _query2 = _interopRequireDefault(_query);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var getVersion = function getVersion() {
@@ -151,7 +185,8 @@
 	  return {
 	    getVersion: getVersion,
 	    consumer: _consumer2.default,
-	    cache: _cache2.default
+	    cache: _cache2.default,
+	    query: _query2.default
 	  };
 	};
 
@@ -306,6 +341,9 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	/** simple object cache **/
+
+
 	var dataStore = {};
 
 	var getQueryHash = function getQueryHash(query) {
@@ -365,6 +403,94 @@
 
 /***/ },
 /* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _feed_services = __webpack_require__(12);
+
+	var _feed_services2 = _interopRequireDefault(_feed_services);
+
+	var _lodash = __webpack_require__(13);
+
+	var _lodash2 = _interopRequireDefault(_lodash);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	/** query constructor used to generate urls appropriate for various rss providing services **/
+	/** feed services are defined in /lib/config/feed_services.json, however the plan is to allow
+	    service resources to be configurable via module functions **/
+
+	var getAllQueries = function getAllQueries(keyword) {
+	  var query = {};
+	  _lodash2.default.each(_feed_services2.default, function (service) {
+	    query[service.name] = service.path.replace('{QUERY}', keyword);
+	  });
+
+	  return query;
+	};
+
+	var getQueryForService = function getQueryForService(keyword, service_key) {
+	  var path = null;
+	  _lodash2.default.each(_feed_services2.default, function (service) {
+	    if (service.name === service_key) {
+	      path = service.path.replace('{QUERY}', keyword);
+	    }
+	  });
+	  var query = {};
+	  query[service_key] = path;
+	  return query;
+	};
+
+	var getQueryForServices = function getQueryForServices(keyword, service_keys) {
+	  var query = {};
+	  _lodash2.default.each(_feed_services2.default, function (service) {
+	    if (_lodash2.default.indexOf(service_keys, service.name) > -1) {
+	      query[service.name] = service.path.replace('{QUERY}', keyword);
+	    }
+	  });
+	  return query;
+	};
+
+	var query = function query() {
+	  return {
+	    getAllQueries: getAllQueries,
+	    getQueryForService: getQueryForService,
+	    getQueryForServices: getQueryForServices
+	  };
+	};
+
+	exports.default = query();
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = [{
+		"name": "google",
+		"path": "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss"
+	}, {
+		"name": "topix-world-news",
+		"path": "http://www.topix.com/rss/world/{QUERY}"
+	}, {
+		"name": "bing",
+		"path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss"
+	}];
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("lodash");
+
+/***/ },
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -373,11 +499,18 @@
 		"consumer": {
 			"google_rss_url": "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q=Russia&output=rss",
 			"topix_rss_url": "http://www.topix.com/rss/world/russia"
+		},
+		"query": {
+			"test_query": "russia",
+			"services": ["google", "topix-world-news", "bing"],
+			"search_only_services": ["google", "bing"],
+			"one_service_array": ["bing"],
+			"single_service": "google"
 		}
 	};
 
 /***/ },
-/* 12 */
+/* 15 */
 /***/ function(module, exports) {
 
 	module.exports = require("chai");

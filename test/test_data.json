@@ -2,5 +2,12 @@
   "consumer": {
     "google_rss_url": "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q=Russia&output=rss",
     "topix_rss_url": "http://www.topix.com/rss/world/russia"
+  },
+  "query": {
+    "test_query": "russia",
+    "services": ["google", "topix-world-news", "bing"],
+    "search_only_services": ["google", "bing"],
+    "one_service_array": ["bing"],
+    "single_service": "google"
   }
 }

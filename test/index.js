@@ -1,6 +1,7 @@
 'use strict';
 const expect = require('chai').expect;
 import feedeater from '../lib/main';
+import _ from 'lodash';
 import _test_data from './test_data.json';
 
 describe('Feed Eater', () => {
@@ -54,5 +55,33 @@ describe('Feed Eater', () => {
       expect(feedeater.cache.getCachedData('test-data')).to.equal(_test_data);
     });
   });
+
+  describe('Feed Eater - Query Service', () => {
+    it('should provide query building service', () => {
+      expect(feedeater.query).to.exist;
+    });
+    it('should build all queries for test keyword', () => {
+      let queries = feedeater.query.getAllQueries(_test_data.query.test_query);
+      let q_keys =_.keys(queries);
+      expect(q_keys.length).to.be.above(2);
+    });
+    it('should build only two for test keyword', () => {
+      let queries = feedeater.query.getQueryForServices(_test_data.query.test_query, _test_data.query.search_only_services);
+      let q_keys =_.keys(queries);
+      expect(q_keys.length).to.be.equal(2);
+    });
+    it('should build only one for test keyword', () => {
+      let queries = feedeater.query.getQueryForServices(_test_data.query.test_query, _test_data.query.one_service_array);
+      let q_keys =_.keys(queries);
+      expect(q_keys.length).to.be.equal(1);
+    });
+    it('should build only one (the other way) for test keyword', () => {
+      let queries = feedeater.query.getQueryForService(_test_data.query.test_query, _test_data.query.single_service);
+      let q_keys =_.keys(queries);
+      expect(q_keys.length).to.be.equal(1);
+    });
+  });
+
+
 
 });
