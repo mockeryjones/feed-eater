@@ -9,5 +9,8 @@
     "search_only_services": ["google", "bing"],
     "one_service_array": ["bing"],
     "single_service": "google"
+  },
+  "loader": {
+    "query_index": 17
   }
 }

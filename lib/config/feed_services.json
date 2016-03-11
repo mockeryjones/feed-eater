@@ -1,14 +1,17 @@
 [
   {
     "name": "google",
-    "path" : "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss"
+    "path" : "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss",
+    "query_spacer": "+"
   },
   {
     "name": "topix-world-news",
-    "path": "http://www.topix.com/rss/world/{QUERY}"
+    "path": "http://www.topix.com/rss/world/{QUERY}",
+    "query_spacer": "-"
   },
   {
     "name": "bing",
-    "path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss"
+    "path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss",
+    "query_spacer": "+"
   }
 ]

@@ -1,10 +1,17 @@
 'use strict';
 const expect = require('chai').expect;
 import feedeater from '../lib/main';
+import countries from '../lib/config/countries.json';
 import _ from 'lodash';
 import _test_data from './test_data.json';
 
 describe('Feed Eater', () => {
+
+  let pickRandomFromZeroTo = (max) => {
+    let rnd = Math.floor(Math.random() * 100);
+    return (rnd > -1 && rnd <= max) ? rnd : pickRandomFromZeroTo(max);
+  };
+
   it('should not be undefined', () => {
     expect(feedeater).to.exist;
   });
@@ -17,20 +24,20 @@ describe('Feed Eater', () => {
 
   describe('Feed Eater - Consumer Service', () => {
     it('should provide consumer service', () => {
-      expect(feedeater.consumer).to.exist;
+      expect(feedeater.eater).to.exist;
     });
     it('should execute consume method', () => {
-      let feed = feedeater.consumer.consume(_test_data.consumer.google_rss_url);
+      let feed = feedeater.eater.consume(_test_data.consumer.google_rss_url);
       expect(feed).to.not.be.null;
     });
     it('should execute consume method and get data', () => {
-      let feed = feedeater.consumer.consume(_test_data.consumer.google_rss_url);
+      let feed = feedeater.eater.consume(_test_data.consumer.google_rss_url);
       return feed.then( (data) => {
         expect(data).to.not.be.null;
       });
     });
     it('should execute consume method on alternate url and get data', () => {
-      let feed = feedeater.consumer.consume(_test_data.consumer.topix_rss_url);
+      let feed = feedeater.eater.consume(_test_data.consumer.topix_rss_url);
       return feed.then( (data) => {
         expect(data).to.not.be.null;
       });
@@ -82,6 +89,23 @@ describe('Feed Eater', () => {
     });
   });
 
-
+  describe('Feed Eater - Loader Service', () => {
+    it('should provide keyword loading service', () => {
+      expect(feedeater.loader).to.exist;
+    });
+    it('should associate queries with predefined keyword list', () => {
+      let queries = feedeater.loader.buildQueryList(countries);
+      expect(queries.length).to.be.above(100);
+    });
+    it('should attempt to fetch data given a query collection', () => {
+        let queries = feedeater.loader.buildQueryList(countries);
+        let query_bundle = queries[pickRandomFromZeroTo(queries.length - 1)];
+        let query_promise = feedeater.loader.executeQueryBundle(query_bundle);
+        return query_promise.then( data => {
+          expect(data).to.not.be.null;
+          expect(data.length).to.be.equal(3);
+        });
+    });
+  });
 
 });

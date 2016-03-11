@@ -57,20 +57,30 @@
 
 	var _main2 = _interopRequireDefault(_main);
 
+	var _countries = __webpack_require__(16);
+
+	var _countries2 = _interopRequireDefault(_countries);
+
 	var _lodash = __webpack_require__(13);
 
 	var _lodash2 = _interopRequireDefault(_lodash);
 
-	var _test_data2 = __webpack_require__(14);
+	var _test_data2 = __webpack_require__(17);
 
 	var _test_data3 = _interopRequireDefault(_test_data2);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var expect = __webpack_require__(15).expect;
+	var expect = __webpack_require__(18).expect;
 
 
 	describe('Feed Eater', function () {
+
+	  var pickRandomFromZeroTo = function pickRandomFromZeroTo(max) {
+	    var rnd = Math.floor(Math.random() * 100);
+	    return rnd > -1 && rnd <= max ? rnd : pickRandomFromZeroTo(max);
+	  };
+
 	  it('should not be undefined', function () {
 	    expect(_main2.default).to.exist;
 	  });
@@ -83,20 +93,20 @@
 
 	  describe('Feed Eater - Consumer Service', function () {
 	    it('should provide consumer service', function () {
-	      expect(_main2.default.consumer).to.exist;
+	      expect(_main2.default.eater).to.exist;
 	    });
 	    it('should execute consume method', function () {
-	      var feed = _main2.default.consumer.consume(_test_data3.default.consumer.google_rss_url);
+	      var feed = _main2.default.eater.consume(_test_data3.default.consumer.google_rss_url);
 	      expect(feed).to.not.be.null;
 	    });
 	    it('should execute consume method and get data', function () {
-	      var feed = _main2.default.consumer.consume(_test_data3.default.consumer.google_rss_url);
+	      var feed = _main2.default.eater.consume(_test_data3.default.consumer.google_rss_url);
 	      return feed.then(function (data) {
 	        expect(data).to.not.be.null;
 	      });
 	    });
 	    it('should execute consume method on alternate url and get data', function () {
-	      var feed = _main2.default.consumer.consume(_test_data3.default.consumer.topix_rss_url);
+	      var feed = _main2.default.eater.consume(_test_data3.default.consumer.topix_rss_url);
 	      return feed.then(function (data) {
 	        expect(data).to.not.be.null;
 	      });
@@ -129,7 +139,7 @@
 	    it('should build all queries for test keyword', function () {
 	      var queries = _main2.default.query.getAllQueries(_test_data3.default.query.test_query);
 	      var q_keys = _lodash2.default.keys(queries);
-	      expect(q_keys.length).to.be.above(1);
+	      expect(q_keys.length).to.be.above(2);
 	    });
 	    it('should build only two for test keyword', function () {
 	      var queries = _main2.default.query.getQueryForServices(_test_data3.default.query.test_query, _test_data3.default.query.search_only_services);
@@ -145,6 +155,25 @@
 	      var queries = _main2.default.query.getQueryForService(_test_data3.default.query.test_query, _test_data3.default.query.single_service);
 	      var q_keys = _lodash2.default.keys(queries);
 	      expect(q_keys.length).to.be.equal(1);
+	    });
+	  });
+
+	  describe('Feed Eater - Loader Service', function () {
+	    it('should provide keyword loading service', function () {
+	      expect(_main2.default.loader).to.exist;
+	    });
+	    it('should associate queries with predefined keyword list', function () {
+	      var queries = _main2.default.loader.buildQueryList(_countries2.default);
+	      expect(queries.length).to.be.above(100);
+	    });
+	    it('should attempt to fetch data given a query collection', function () {
+	      var queries = _main2.default.loader.buildQueryList(_countries2.default);
+	      var query_bundle = queries[pickRandomFromZeroTo(queries.length - 1)];
+	      var query_promise = _main2.default.loader.executeQueryBundle(query_bundle);
+	      return query_promise.then(function (data) {
+	        expect(data).to.not.be.null;
+	        expect(data.length).to.be.equal(3);
+	      });
 	    });
 	  });
 	});
@@ -163,9 +192,9 @@
 
 	var _package2 = _interopRequireDefault(_package);
 
-	var _consumer = __webpack_require__(4);
+	var _eater = __webpack_require__(4);
 
-	var _consumer2 = _interopRequireDefault(_consumer);
+	var _eater2 = _interopRequireDefault(_eater);
 
 	var _cache = __webpack_require__(8);
 
@@ -174,6 +203,10 @@
 	var _query = __webpack_require__(11);
 
 	var _query2 = _interopRequireDefault(_query);
+
+	var _loader = __webpack_require__(14);
+
+	var _loader2 = _interopRequireDefault(_loader);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -184,9 +217,10 @@
 	var feedeater = function feedeater() {
 	  return {
 	    getVersion: getVersion,
-	    consumer: _consumer2.default,
+	    eater: _eater2.default,
 	    cache: _cache2.default,
-	    query: _query2.default
+	    query: _query2.default,
+	    loader: _loader2.default
 	  };
 	};
 
@@ -295,13 +329,13 @@
 	}; /** simple rss to json http requestor */
 
 
-	var consumer = function consumer() {
+	var eater = function eater() {
 	    return {
 	        consume: consume
 	    };
 	};
 
-	exports.default = consumer();
+	exports.default = eater();
 
 /***/ },
 /* 5 */
@@ -428,7 +462,8 @@
 	var getAllQueries = function getAllQueries(keyword) {
 	  var query = {};
 	  _lodash2.default.each(_feed_services2.default, function (service) {
-	    query[service.name] = service.path.replace('{QUERY}', keyword);
+	    var service_keyword = keyword.replace(/ /g, service.query_spacer);
+	    query[service.name] = service.path.replace('{QUERY}', service_keyword.toLowerCase());
 	  });
 
 	  return query;
@@ -438,7 +473,8 @@
 	  var path = null;
 	  _lodash2.default.each(_feed_services2.default, function (service) {
 	    if (service.name === service_key) {
-	      path = service.path.replace('{QUERY}', keyword);
+	      var service_keyword = keyword.replace(/ /g, service.query_spacer.toLowerCase());
+	      path = service.path.replace('{QUERY}', service_keyword);
 	    }
 	  });
 	  var query = {};
@@ -450,7 +486,8 @@
 	  var query = {};
 	  _lodash2.default.each(_feed_services2.default, function (service) {
 	    if (_lodash2.default.indexOf(service_keys, service.name) > -1) {
-	      query[service.name] = service.path.replace('{QUERY}', keyword);
+	      var service_keyword = keyword.replace(/ /g, service.query_spacer);
+	      query[service.name] = service.path.replace('{QUERY}', service_keyword.toLowerCase());
 	    }
 	  });
 	  return query;
@@ -474,13 +511,16 @@
 
 	module.exports = [{
 		"name": "google",
-		"path": "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss"
+		"path": "https://news.google.de/news/feeds?pz=1&cf=all&ned=en&hl=en&q={QUERY}&output=rss",
+		"query_spacer": "+"
 	}, {
 		"name": "topix-world-news",
-		"path": "http://www.topix.com/rss/world/{QUERY}"
+		"path": "http://www.topix.com/rss/world/{QUERY}",
+		"query_spacer": "-"
 	}, {
 		"name": "bing",
-		"path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss"
+		"path": "http://www.bing.com/news/search?q={QUERY}&FORM=HDRSC6&format=rss",
+		"query_spacer": "+"
 	}];
 
 /***/ },
@@ -491,6 +531,829 @@
 
 /***/ },
 /* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _query = __webpack_require__(11);
+
+	var _query2 = _interopRequireDefault(_query);
+
+	var _lodash = __webpack_require__(13);
+
+	var _lodash2 = _interopRequireDefault(_lodash);
+
+	var _when = __webpack_require__(15);
+
+	var _when2 = _interopRequireDefault(_when);
+
+	var _eater = __webpack_require__(4);
+
+	var _eater2 = _interopRequireDefault(_eater);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var buildQueryList = function buildQueryList(list) {
+	  var _list = [];
+	  _lodash2.default.each(list, function (data) {
+	    if (data.services !== undefined) {
+	      data.query = _query2.default.getQueryForServices(data.keyword, data.services);
+	    } else {
+	      data.query = _query2.default.getAllQueries(data.keyword);
+	    }
+	    _list.push(data);
+	  });
+	  return _list;
+	};
+
+	var buildQueriesForKeyword = function buildQueriesForKeyword(keyword, services) {
+	  var query = {};
+	  query.keyword = keyword;
+	  if (services !== undefined) {
+	    query.query = query.getQueryForServices(keyword, services);
+	  } else {
+	    query.query = query.getAllQueries(keyword);
+	  }
+	  return query;
+	};
+
+	var executeQueryBundle = function executeQueryBundle(query_obj) {
+	  var requests = [];
+	  var _keys = _lodash2.default.keys(query_obj.query);
+	  _lodash2.default.each(_keys, function (key) {
+	    requests.push(_eater2.default.consume(query_obj.query[key]));
+	  });
+	  //I thought about defining an execution handler for this method
+	  //but then i realised this is really just another type of promise.
+	  //let the caller decide what to do with the results.  this is just
+	  //a convenience method fow wrapping a bunch of feed requests into one bundle.
+	  return _when2.default.settle(requests);
+	};
+
+	var loader = function loader() {
+	  return {
+	    buildQueryList: buildQueryList,
+	    executeQueryBundle: executeQueryBundle
+	  };
+	};
+
+	exports.default = loader();
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	module.exports = require("when");
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = [{
+		"keyword": "Afghanistan",
+		"id": "AF"
+	}, {
+		"keyword": "Åland Islands",
+		"id": "AX"
+	}, {
+		"keyword": "Albania",
+		"id": "AL"
+	}, {
+		"keyword": "Algeria",
+		"id": "DZ"
+	}, {
+		"keyword": "American Samoa",
+		"id": "AS"
+	}, {
+		"keyword": "Andorra",
+		"id": "AD"
+	}, {
+		"keyword": "Angola",
+		"id": "AO"
+	}, {
+		"keyword": "Anguilla",
+		"id": "AI"
+	}, {
+		"keyword": "Antarctica",
+		"id": "AQ"
+	}, {
+		"keyword": "Antigua and Barbuda",
+		"id": "AG"
+	}, {
+		"keyword": "Argentina",
+		"id": "AR"
+	}, {
+		"keyword": "Armenia",
+		"id": "AM"
+	}, {
+		"keyword": "Aruba",
+		"id": "AW"
+	}, {
+		"keyword": "Australia",
+		"id": "AU"
+	}, {
+		"keyword": "Austria",
+		"id": "AT"
+	}, {
+		"keyword": "Azerbaijan",
+		"id": "AZ"
+	}, {
+		"keyword": "Bahamas",
+		"id": "BS"
+	}, {
+		"keyword": "Bahrain",
+		"id": "BH"
+	}, {
+		"keyword": "Bangladesh",
+		"id": "BD"
+	}, {
+		"keyword": "Barbados",
+		"id": "BB"
+	}, {
+		"keyword": "Belarus",
+		"id": "BY"
+	}, {
+		"keyword": "Belgium",
+		"id": "BE"
+	}, {
+		"keyword": "Belize",
+		"id": "BZ"
+	}, {
+		"keyword": "Benin",
+		"id": "BJ"
+	}, {
+		"keyword": "Bermuda",
+		"id": "BM"
+	}, {
+		"keyword": "Bhutan",
+		"id": "BT"
+	}, {
+		"keyword": "Bolivia",
+		"id": "BO"
+	}, {
+		"keyword": "Bosnia and Herzegovina",
+		"id": "BA"
+	}, {
+		"keyword": "Botswana",
+		"id": "BW"
+	}, {
+		"keyword": "Bouvet Island",
+		"id": "BV"
+	}, {
+		"keyword": "Brazil",
+		"id": "BR"
+	}, {
+		"keyword": "British Indian Ocean Territory",
+		"id": "IO"
+	}, {
+		"keyword": "Brunei Darussalam",
+		"id": "BN"
+	}, {
+		"keyword": "Bulgaria",
+		"id": "BG"
+	}, {
+		"keyword": "Burkina Faso",
+		"id": "BF"
+	}, {
+		"keyword": "Burundi",
+		"id": "BI"
+	}, {
+		"keyword": "Cambodia",
+		"id": "KH"
+	}, {
+		"keyword": "Cameroon",
+		"id": "CM"
+	}, {
+		"keyword": "Canada",
+		"id": "CA"
+	}, {
+		"keyword": "Cape Verde",
+		"id": "CV"
+	}, {
+		"keyword": "Cayman Islands",
+		"id": "KY"
+	}, {
+		"keyword": "Central African Republic",
+		"id": "CF"
+	}, {
+		"keyword": "Chad",
+		"id": "TD"
+	}, {
+		"keyword": "Chile",
+		"id": "CL"
+	}, {
+		"keyword": "China",
+		"id": "CN"
+	}, {
+		"keyword": "Christmas Island",
+		"id": "CX"
+	}, {
+		"keyword": "Cocos (Keeling) Islands",
+		"id": "CC"
+	}, {
+		"keyword": "Colombia",
+		"id": "CO"
+	}, {
+		"keyword": "Comoros",
+		"id": "KM"
+	}, {
+		"keyword": "Congo",
+		"id": "CG"
+	}, {
+		"keyword": "Congo, The Democratic Republic of the",
+		"id": "CD"
+	}, {
+		"keyword": "Cook Islands",
+		"id": "CK"
+	}, {
+		"keyword": "Costa Rica",
+		"id": "CR"
+	}, {
+		"keyword": "Cote D'Ivoire",
+		"id": "CI"
+	}, {
+		"keyword": "Croatia",
+		"id": "HR"
+	}, {
+		"keyword": "Cuba",
+		"id": "CU"
+	}, {
+		"keyword": "Cyprus",
+		"id": "CY"
+	}, {
+		"keyword": "Czech Republic",
+		"id": "CZ"
+	}, {
+		"keyword": "Denmark",
+		"id": "DK"
+	}, {
+		"keyword": "Djibouti",
+		"id": "DJ"
+	}, {
+		"keyword": "Dominica",
+		"id": "DM"
+	}, {
+		"keyword": "Dominican Republic",
+		"id": "DO"
+	}, {
+		"keyword": "Ecuador",
+		"id": "EC"
+	}, {
+		"keyword": "Egypt",
+		"id": "EG"
+	}, {
+		"keyword": "El Salvador",
+		"id": "SV"
+	}, {
+		"keyword": "Equatorial Guinea",
+		"id": "GQ"
+	}, {
+		"keyword": "Eritrea",
+		"id": "ER"
+	}, {
+		"keyword": "Estonia",
+		"id": "EE"
+	}, {
+		"keyword": "Ethiopia",
+		"id": "ET"
+	}, {
+		"keyword": "Falkland Islands (Malvinas)",
+		"id": "FK"
+	}, {
+		"keyword": "Faroe Islands",
+		"id": "FO"
+	}, {
+		"keyword": "Fiji",
+		"id": "FJ"
+	}, {
+		"keyword": "Finland",
+		"id": "FI"
+	}, {
+		"keyword": "France",
+		"id": "FR"
+	}, {
+		"keyword": "French Guiana",
+		"id": "GF"
+	}, {
+		"keyword": "French Polynesia",
+		"id": "PF"
+	}, {
+		"keyword": "French Southern Territories",
+		"id": "TF"
+	}, {
+		"keyword": "Gabon",
+		"id": "GA"
+	}, {
+		"keyword": "Gambia",
+		"id": "GM"
+	}, {
+		"keyword": "Georgia",
+		"id": "GE"
+	}, {
+		"keyword": "Germany",
+		"id": "DE"
+	}, {
+		"keyword": "Ghana",
+		"id": "GH"
+	}, {
+		"keyword": "Gibraltar",
+		"id": "GI"
+	}, {
+		"keyword": "Greece",
+		"id": "GR"
+	}, {
+		"keyword": "Greenland",
+		"id": "GL"
+	}, {
+		"keyword": "Grenada",
+		"id": "GD"
+	}, {
+		"keyword": "Guadeloupe",
+		"id": "GP"
+	}, {
+		"keyword": "Guam",
+		"id": "GU"
+	}, {
+		"keyword": "Guatemala",
+		"id": "GT"
+	}, {
+		"keyword": "Guernsey",
+		"id": "GG"
+	}, {
+		"keyword": "Guinea",
+		"id": "GN"
+	}, {
+		"keyword": "Guinea-Bissau",
+		"id": "GW"
+	}, {
+		"keyword": "Guyana",
+		"id": "GY"
+	}, {
+		"keyword": "Haiti",
+		"id": "HT"
+	}, {
+		"keyword": "Heard Island and Mcdonald Islands",
+		"id": "HM"
+	}, {
+		"keyword": "Holy See (Vatican City State)",
+		"id": "VA"
+	}, {
+		"keyword": "Honduras",
+		"id": "HN"
+	}, {
+		"keyword": "Hong Kong",
+		"id": "HK"
+	}, {
+		"keyword": "Hungary",
+		"id": "HU"
+	}, {
+		"keyword": "Iceland",
+		"id": "IS"
+	}, {
+		"keyword": "India",
+		"id": "IN"
+	}, {
+		"keyword": "Indonesia",
+		"id": "ID"
+	}, {
+		"keyword": "Iran, Islamic Republic Of",
+		"id": "IR"
+	}, {
+		"keyword": "Iraq",
+		"id": "IQ"
+	}, {
+		"keyword": "Ireland",
+		"id": "IE"
+	}, {
+		"keyword": "Isle of Man",
+		"id": "IM"
+	}, {
+		"keyword": "Israel",
+		"id": "IL"
+	}, {
+		"keyword": "Italy",
+		"id": "IT"
+	}, {
+		"keyword": "Jamaica",
+		"id": "JM"
+	}, {
+		"keyword": "Japan",
+		"id": "JP"
+	}, {
+		"keyword": "Jersey",
+		"id": "JE"
+	}, {
+		"keyword": "Jordan",
+		"id": "JO"
+	}, {
+		"keyword": "Kazakhstan",
+		"id": "KZ"
+	}, {
+		"keyword": "Kenya",
+		"id": "KE"
+	}, {
+		"keyword": "Kiribati",
+		"id": "KI"
+	}, {
+		"keyword": "Democratic People's Republic of Korea",
+		"id": "KP"
+	}, {
+		"keyword": "Korea, Republic of",
+		"id": "KR"
+	}, {
+		"keyword": "Kosovo",
+		"id": "XK"
+	}, {
+		"keyword": "Kuwait",
+		"id": "KW"
+	}, {
+		"keyword": "Kyrgyzstan",
+		"id": "KG"
+	}, {
+		"keyword": "Lao People's Democratic Republic",
+		"id": "LA"
+	}, {
+		"keyword": "Latvia",
+		"id": "LV"
+	}, {
+		"keyword": "Lebanon",
+		"id": "LB"
+	}, {
+		"keyword": "Lesotho",
+		"id": "LS"
+	}, {
+		"keyword": "Liberia",
+		"id": "LR"
+	}, {
+		"keyword": "Libyan Arab Jamahiriya",
+		"id": "LY"
+	}, {
+		"keyword": "Liechtenstein",
+		"id": "LI"
+	}, {
+		"keyword": "Lithuania",
+		"id": "LT"
+	}, {
+		"keyword": "Luxembourg",
+		"id": "LU"
+	}, {
+		"keyword": "Macao",
+		"id": "MO"
+	}, {
+		"keyword": "Macedonia, The Former Yugoslav Republic of",
+		"id": "MK"
+	}, {
+		"keyword": "Madagascar",
+		"id": "MG"
+	}, {
+		"keyword": "Malawi",
+		"id": "MW"
+	}, {
+		"keyword": "Malaysia",
+		"id": "MY"
+	}, {
+		"keyword": "Maldives",
+		"id": "MV"
+	}, {
+		"keyword": "Mali",
+		"id": "ML"
+	}, {
+		"keyword": "Malta",
+		"id": "MT"
+	}, {
+		"keyword": "Marshall Islands",
+		"id": "MH"
+	}, {
+		"keyword": "Martinique",
+		"id": "MQ"
+	}, {
+		"keyword": "Mauritania",
+		"id": "MR"
+	}, {
+		"keyword": "Mauritius",
+		"id": "MU"
+	}, {
+		"keyword": "Mayotte",
+		"id": "YT"
+	}, {
+		"keyword": "Mexico",
+		"id": "MX"
+	}, {
+		"keyword": "Micronesia, Federated States of",
+		"id": "FM"
+	}, {
+		"keyword": "Moldova, Republic of",
+		"id": "MD"
+	}, {
+		"keyword": "Monaco",
+		"id": "MC"
+	}, {
+		"keyword": "Mongolia",
+		"id": "MN"
+	}, {
+		"keyword": "Montenegro",
+		"id": "ME"
+	}, {
+		"keyword": "Montserrat",
+		"id": "MS"
+	}, {
+		"keyword": "Morocco",
+		"id": "MA"
+	}, {
+		"keyword": "Mozambique",
+		"id": "MZ"
+	}, {
+		"keyword": "Myanmar",
+		"id": "MM"
+	}, {
+		"keyword": "Namibia",
+		"id": "NA"
+	}, {
+		"keyword": "Nauru",
+		"id": "NR"
+	}, {
+		"keyword": "Nepal",
+		"id": "NP"
+	}, {
+		"keyword": "Netherlands",
+		"id": "NL"
+	}, {
+		"keyword": "Netherlands Antilles",
+		"id": "AN"
+	}, {
+		"keyword": "New Caledonia",
+		"id": "NC"
+	}, {
+		"keyword": "New Zealand",
+		"id": "NZ"
+	}, {
+		"keyword": "Nicaragua",
+		"id": "NI"
+	}, {
+		"keyword": "Niger",
+		"id": "NE"
+	}, {
+		"keyword": "Nigeria",
+		"id": "NG"
+	}, {
+		"keyword": "Niue",
+		"id": "NU"
+	}, {
+		"keyword": "Norfolk Island",
+		"id": "NF"
+	}, {
+		"keyword": "Northern Mariana Islands",
+		"id": "MP"
+	}, {
+		"keyword": "Norway",
+		"id": "NO"
+	}, {
+		"keyword": "Oman",
+		"id": "OM"
+	}, {
+		"keyword": "Pakistan",
+		"id": "PK"
+	}, {
+		"keyword": "Palau",
+		"id": "PW"
+	}, {
+		"keyword": "Palestinian Territory, Occupied",
+		"id": "PS"
+	}, {
+		"keyword": "Panama",
+		"id": "PA"
+	}, {
+		"keyword": "Papua New Guinea",
+		"id": "PG"
+	}, {
+		"keyword": "Paraguay",
+		"id": "PY"
+	}, {
+		"keyword": "Peru",
+		"id": "PE"
+	}, {
+		"keyword": "Philippines",
+		"id": "PH"
+	}, {
+		"keyword": "Pitcairn",
+		"id": "PN"
+	}, {
+		"keyword": "Poland",
+		"id": "PL"
+	}, {
+		"keyword": "Portugal",
+		"id": "PT"
+	}, {
+		"keyword": "Puerto Rico",
+		"id": "PR"
+	}, {
+		"keyword": "Qatar",
+		"id": "QA"
+	}, {
+		"keyword": "Reunion",
+		"id": "RE"
+	}, {
+		"keyword": "Romania",
+		"id": "RO"
+	}, {
+		"keyword": "Russian Federation",
+		"id": "RU"
+	}, {
+		"keyword": "Rwanda",
+		"id": "RW"
+	}, {
+		"keyword": "Saint Helena",
+		"id": "SH"
+	}, {
+		"keyword": "Saint Kitts and Nevis",
+		"id": "KN"
+	}, {
+		"keyword": "Saint Lucia",
+		"id": "LC"
+	}, {
+		"keyword": "Saint Pierre and Miquelon",
+		"id": "PM"
+	}, {
+		"keyword": "Saint Vincent and the Grenadines",
+		"id": "VC"
+	}, {
+		"keyword": "Samoa",
+		"id": "WS"
+	}, {
+		"keyword": "San Marino",
+		"id": "SM"
+	}, {
+		"keyword": "Sao Tome and Principe",
+		"id": "ST"
+	}, {
+		"keyword": "Saudi Arabia",
+		"id": "SA"
+	}, {
+		"keyword": "Senegal",
+		"id": "SN"
+	}, {
+		"keyword": "Serbia",
+		"id": "RS"
+	}, {
+		"keyword": "Seychelles",
+		"id": "SC"
+	}, {
+		"keyword": "Sierra Leone",
+		"id": "SL"
+	}, {
+		"keyword": "Singapore",
+		"id": "SG"
+	}, {
+		"keyword": "Slovakia",
+		"id": "SK"
+	}, {
+		"keyword": "Slovenia",
+		"id": "SI"
+	}, {
+		"keyword": "Solomon Islands",
+		"id": "SB"
+	}, {
+		"keyword": "Somalia",
+		"id": "SO"
+	}, {
+		"keyword": "South Africa",
+		"id": "ZA"
+	}, {
+		"keyword": "South Georgia and the South Sandwich Islands",
+		"id": "GS"
+	}, {
+		"keyword": "Spain",
+		"id": "ES"
+	}, {
+		"keyword": "Sri Lanka",
+		"id": "LK"
+	}, {
+		"keyword": "Sudan",
+		"id": "SD"
+	}, {
+		"keyword": "Suriname",
+		"id": "SR"
+	}, {
+		"keyword": "Svalbard and Jan Mayen",
+		"id": "SJ"
+	}, {
+		"keyword": "Swaziland",
+		"id": "SZ"
+	}, {
+		"keyword": "Sweden",
+		"id": "SE"
+	}, {
+		"keyword": "Switzerland",
+		"id": "CH"
+	}, {
+		"keyword": "Syrian Arab Republic",
+		"id": "SY"
+	}, {
+		"keyword": "Taiwan",
+		"id": "TW"
+	}, {
+		"keyword": "Tajikistan",
+		"id": "TJ"
+	}, {
+		"keyword": "Tanzania, United Republic of",
+		"id": "TZ"
+	}, {
+		"keyword": "Thailand",
+		"id": "TH"
+	}, {
+		"keyword": "Timor-Leste",
+		"id": "TL"
+	}, {
+		"keyword": "Togo",
+		"id": "TG"
+	}, {
+		"keyword": "Tokelau",
+		"id": "TK"
+	}, {
+		"keyword": "Tonga",
+		"id": "TO"
+	}, {
+		"keyword": "Trinidad and Tobago",
+		"id": "TT"
+	}, {
+		"keyword": "Tunisia",
+		"id": "TN"
+	}, {
+		"keyword": "Turkey",
+		"id": "TR"
+	}, {
+		"keyword": "Turkmenistan",
+		"id": "TM"
+	}, {
+		"keyword": "Turks and Caicos Islands",
+		"id": "TC"
+	}, {
+		"keyword": "Tuvalu",
+		"id": "TV"
+	}, {
+		"keyword": "Uganda",
+		"id": "UG"
+	}, {
+		"keyword": "Ukraine",
+		"id": "UA"
+	}, {
+		"keyword": "United Arab Emirates",
+		"id": "AE"
+	}, {
+		"keyword": "United Kingdom",
+		"id": "GB"
+	}, {
+		"keyword": "United States",
+		"id": "US"
+	}, {
+		"keyword": "United States Minor Outlying Islands",
+		"id": "UM"
+	}, {
+		"keyword": "Uruguay",
+		"id": "UY"
+	}, {
+		"keyword": "Uzbekistan",
+		"id": "UZ"
+	}, {
+		"keyword": "Vanuatu",
+		"id": "VU"
+	}, {
+		"keyword": "Venezuela",
+		"id": "VE"
+	}, {
+		"keyword": "Viet Nam",
+		"id": "VN"
+	}, {
+		"keyword": "Virgin Islands, British",
+		"id": "VG"
+	}, {
+		"keyword": "Virgin Islands, U.S.",
+		"id": "VI"
+	}, {
+		"keyword": "Wallis and Futuna",
+		"id": "WF"
+	}, {
+		"keyword": "Western Sahara",
+		"id": "EH"
+	}, {
+		"keyword": "Yemen",
+		"id": "YE"
+	}, {
+		"keyword": "Zambia",
+		"id": "ZM"
+	}, {
+		"keyword": "Zimbabwe",
+		"id": "ZW"
+	}];
+
+/***/ },
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -506,11 +1369,14 @@
 			"search_only_services": ["google", "bing"],
 			"one_service_array": ["bing"],
 			"single_service": "google"
+		},
+		"loader": {
+			"query_index": 17
 		}
 	};
 
 /***/ },
-/* 15 */
+/* 18 */
 /***/ function(module, exports) {
 
 	module.exports = require("chai");
