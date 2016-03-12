@@ -1,4 +1,3 @@
-'use strict';
 const expect = require('chai').expect;
 import feedeater from '../lib/main';
 import countries from '../lib/config/countries.json';
