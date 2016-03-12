@@ -169,8 +169,8 @@
 	    it('should attempt to fetch data given a query collection', function () {
 	      var queries = _main2.default.loader.buildQueryList(_countries2.default);
 	      var query_bundle = queries[pickRandomFromZeroTo(queries.length - 1)];
-	      var query_promise = _main2.default.loader.executeQueryBundle(query_bundle);
-	      return query_promise.then(function (data) {
+	      var query_promises = _main2.default.loader.getQueryPromises(query_bundle);
+	      return query_promises.then(function (data) {
 	        expect(data).to.not.be.null;
 	        expect(data.length).to.be.equal(3);
 	      });
@@ -257,7 +257,7 @@
 			"test": "rm -rf test/_generated_tests.js && webpack --progress --config webpack-test-config.js && npm run _test",
 			"build:js": "webpack --optimize-minimize",
 			"build": "npm run prepare && npm run prepare:dir && npm run lint && npm run build:js && npm run test",
-			"start": "node dist/fead.eater.js"
+			"start": "node dist/feed.eater.js test 2"
 		},
 		"dependencies": {
 			"babel-preset-es2015": "^6.3.13",
@@ -581,7 +581,7 @@
 	  return query;
 	};
 
-	var executeQueryBundle = function executeQueryBundle(query_obj) {
+	var getQueryPromises = function getQueryPromises(query_obj) {
 	  var requests = [];
 	  var _keys = _lodash2.default.keys(query_obj.query);
 	  _lodash2.default.each(_keys, function (key) {
@@ -594,10 +594,34 @@
 	  return _when2.default.settle(requests);
 	};
 
+	var buildQueryPlan = function buildQueryPlan(list) {
+	  var _list = [];
+	  _lodash2.default.each(list, function (data) {
+	    var data_promise = getQueryPromises(data);
+	    data.promise = data_promise;
+	    _list.push(data);
+	  });
+	  return _list;
+	};
+
+	var executePlan = function executePlan(list) {
+	  _lodash2.default.each(list, function (query) {
+	    query.promise.then(function (data) {
+	      console.log('results for query ' + JSON.stringify(query, null, 4));
+	      console.log(data);
+	    }, function (err) {
+	      console.log('error for query ' + JSON.stringify(query, null, 4));
+	      console.log(err);
+	    });
+	  });
+	};
+
 	var loader = function loader() {
 	  return {
 	    buildQueryList: buildQueryList,
-	    executeQueryBundle: executeQueryBundle
+	    getQueryPromises: getQueryPromises,
+	    buildQueryPlan: buildQueryPlan,
+	    executePlan: executePlan
 	  };
 	};
 

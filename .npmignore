@@ -4,6 +4,7 @@ node_modules
 reports
 test
 lib
+integration
 .git
 .DS_Store
 npm-debug.log

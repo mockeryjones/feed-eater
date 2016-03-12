@@ -100,8 +100,8 @@ describe('Feed Eater', () => {
     it('should attempt to fetch data given a query collection', () => {
         let queries = feedeater.loader.buildQueryList(countries);
         let query_bundle = queries[pickRandomFromZeroTo(queries.length - 1)];
-        let query_promise = feedeater.loader.executeQueryBundle(query_bundle);
-        return query_promise.then( data => {
+        let query_promises = feedeater.loader.getQueryPromises(query_bundle);
+        return query_promises.then( data => {
           expect(data).to.not.be.null;
           expect(data.length).to.be.equal(3);
         });
