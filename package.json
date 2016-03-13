@@ -19,13 +19,13 @@
     "help": "npm run",
     "clean": "rm -rf node_modules reports dist test/_generated_tests.js",
     "prepare": "npm install",
-    "prepare:dir": "mkdir -p reports dist && rm -rf test/_generated_tests.js",
+    "prepare:dir": "rm -rf dist && mkdir -p reports dist && rm -rf test/_generated_tests.js",
     "lint": "eslint client/*/*.jsx -f checkstyle > reports/jshint-checkstyle.xml",
     "_test": "multi='spec=- xunit=reports/mocha-xunit.xml' mocha --reporter mocha-multi test/_generated_tests.js",
     "test": "rm -rf test/_generated_tests.js && webpack --progress --config webpack-test-config.js && npm run _test",
+    "integration-test": "rm -rf dist/feed.eater.it.js && webpack --progress --config webpack-integration-test-config.js && node dist/feed.eater.it.js",
     "build:js": "webpack --optimize-minimize",
-    "build": "npm run prepare && npm run prepare:dir && npm run lint && npm run build:js && npm run test",
-    "start": "node dist/fead.eater.js"
+    "build": "npm run prepare && npm run prepare:dir && npm run lint && npm run build:js && npm run test"
   },
   "dependencies": {
     "babel-preset-es2015": "^6.3.13",

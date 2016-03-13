@@ -1,5 +1,10 @@
+/**
+  sometimes you just have one of those days.  you futz around with code for 5 hours and end
+  up commiting nothing more than a miniscule code style tweak and a not so witty comment :(
+*/
+
 const expect = require('chai').expect;
-import feedeater from '../lib/main';
+import feedeater from '../lib/module';
 import countries from '../lib/config/countries.json';
 import _ from 'lodash';
 import _test_data from './test_data.json';
@@ -26,11 +31,11 @@ describe('Feed Eater', () => {
       expect(feedeater.eater).to.exist;
     });
     it('should execute consume method', () => {
-      let feed = feedeater.eater.consume(_test_data.consumer.google_rss_url);
+      let feed = feedeater.eater.consume(_test_data.consumer.bing_rss_url);
       expect(feed).to.not.be.null;
     });
     it('should execute consume method and get data', () => {
-      let feed = feedeater.eater.consume(_test_data.consumer.google_rss_url);
+      let feed = feedeater.eater.consume(_test_data.consumer.bing_rss_url);
       return feed.then( (data) => {
         expect(data).to.not.be.null;
       });
@@ -69,7 +74,7 @@ describe('Feed Eater', () => {
     it('should build all queries for test keyword', () => {
       let queries = feedeater.query.getAllQueries(_test_data.query.test_query);
       let q_keys =_.keys(queries);
-      expect(q_keys.length).to.be.above(2);
+      expect(q_keys.length).to.be.equal(2);
     });
     it('should build only two for test keyword', () => {
       let queries = feedeater.query.getQueryForServices(_test_data.query.test_query, _test_data.query.search_only_services);
@@ -102,7 +107,7 @@ describe('Feed Eater', () => {
         let query_promises = feedeater.loader.getQueryPromises(query_bundle);
         return query_promises.then( data => {
           expect(data).to.not.be.null;
-          expect(data.length).to.be.equal(3);
+          expect(data.length).to.be.equal(2);
         });
     });
   });

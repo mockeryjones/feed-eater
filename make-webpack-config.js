@@ -12,7 +12,7 @@ fs.readdirSync('node_modules').filter(function (x) {
 module.exports = (options) => {
   return {
     entry: {
-      main: './lib/main.js'
+      main: './lib/module.js'
     },
     output: {
       path: './dist',
